@@ -5,5 +5,5 @@ package fileSecurity.server;
  * @author Merada Richter
  * 2014/03/26
  */
-public class server {
+public class Server {
 }
