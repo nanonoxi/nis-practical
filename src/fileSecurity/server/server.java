@@ -1,7 +1,7 @@
 package fileSecurity.server;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.net.*;
+import java.net.*;
 /**
  * @author Daniel Burnham-King
  * @author Merada Richter
@@ -19,13 +19,24 @@ public class server {
             socket = new ServerSocket(port);
             p("Socket has been Initialized");
 
+            while(true)
+            {
+                ConHandler connection = new ConHandler(socket.accept());
+            }
 
         }
         catch (IOException e){System.out.println("Error creating the socket on port:" + port);}
     }
 
-    private static class ConHandler extends Thread{
+    private static class ConHandler{
         private boolean authenticated = false;
+        private Socket socket;
+
+        public ConHandler(Socket socket)
+        {
+            this.socket = socket;
+        }
+
     }
     //printHelper
     static void p(String text)
