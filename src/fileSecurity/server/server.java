@@ -11,7 +11,6 @@ import java.security.*;
  * @author Merada Richter
  * 2014/03/26
  */
-
 public class Server {
 
     static ServerSocket socket;

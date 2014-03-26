@@ -5,5 +5,5 @@ package emailSecurity;
  * @author Merada Richter
  * 2014/03/26
  */
-public class client {
+public class Client {
 }

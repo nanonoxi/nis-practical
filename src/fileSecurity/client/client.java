@@ -18,7 +18,7 @@ public class Client {
 
     private InputStreamReader input;
     private OutputStreamWriter output;
-    Handlers.ResponseHandler reponse;
+    private static Handlers.ResponseHandler response;
     Handlers.RequestHandler request;
 
     String SERVER = "localhost";
@@ -27,7 +27,7 @@ public class Client {
 
     public static void main(String args[])
     {
-
+        //response = new Handlers.ResponseHandler();
     }
 
     void connect ()
