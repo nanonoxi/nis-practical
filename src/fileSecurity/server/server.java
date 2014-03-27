@@ -77,7 +77,17 @@ public class Server {
             Cryptics myCrypto = new Cryptics(AESkey);
             //System.out.println(myCrypto.DecryptAES(test));
             System.out.println(myCrypto.DecryptRSAPrivate(test, serverPrivateKey));
+        }
 
+        public void engageHandshake()
+        {
+            try
+            {
+                //TBA
+            }catch(Exception e)
+            {
+                p("Handsake failure");
+            }
         }
     }
 

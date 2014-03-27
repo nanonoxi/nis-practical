@@ -53,8 +53,6 @@ public class Client {
         {
             p("Failed to load keys");
         }
-
-
         myCrypto = new Cryptics(AESkey);
         connect();
     }
@@ -72,15 +70,21 @@ public class Client {
             input = new Handlers.InReader(in);
             output = new Handlers.OutWriter(out);
             p("Streams ready");
-
-
-
-            output.sendEncrypted(myCrypto.EncryptRSAPublic("YOU ARE A PIECAKE!",serverPublicKey));
-
-
+            //output.sendEncrypted(myCrypto.EncryptRSAPublic("YOU ARE A PIECAKE!",serverPublicKey));
         }catch (IOException e){p("Error connecting with the server");
         }catch (Exception e){p("Something else went wrong 1."); e.printStackTrace();}
 
+    }
+
+    static void engageHandshake()
+    {
+        try
+        {
+            //TBA
+        }catch(Exception e)
+        {
+            p("Handshake Failure");
+        }
     }
 
 

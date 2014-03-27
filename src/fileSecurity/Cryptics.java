@@ -109,6 +109,18 @@ public class Cryptics {
         return message;
     }
 
+    public String DecryptRSAPublic(byte[] cipherText, PublicKey pubKey)
+    {
+        String message = "";
+        try
+        {
+            rsa.init(Cipher.DECRYPT_MODE, pubKey);
+            message = new String(rsa.doFinal(cipherText));
+        }
+        catch (Exception e){e.printStackTrace();}
+        return message;
+    }
+
     private void prepRSA()
     {
         try
