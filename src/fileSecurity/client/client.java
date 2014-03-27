@@ -1,49 +1,81 @@
 package fileSecurity.client;
 import com.google.gson.GsonBuilder;
+import fileSecurity.Cryptics;
 import fileSecurity.Handlers;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.*;
+import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
+import java.security.Security;
+import javax.crypto.*;
+import javax.crypto.spec.SecretKeySpec;
+
 
 /**
  * @author Daniel Burnham-King
  * @author Merada Richter
  * 2014/03/26
  */
+
+
 public class Client {
+
+    static
+    {
+        Security.addProvider(new BouncyCastleProvider());
+    }
+
+
+
     //Socket to handle the connection to the server
-    private Socket clientSocket;
+    private static Socket clientSocket;
 
-    private InputStreamReader input;
-    private OutputStreamWriter output;
-    private static Handlers.ResponseHandler response;
-    Handlers.RequestHandler request;
+    private static BufferedReader in;
+    private static PrintWriter out;
+    private static Handlers.InReader input;
+    private static Handlers.OutWriter output;
+    private static Cryptics myCrypto;
 
-    String SERVER = "localhost";
-    int PORT = 8087;
+    static String AESkey = "THIS is a KEY!";
+
+    static String SERVER = "localhost";
+    static final int PORT = 8087;
 
 
     public static void main(String args[])
     {
-        //response = new Handlers.ResponseHandler();
+        myCrypto = new Cryptics(AESkey);
+        connect();
     }
 
-    void connect ()
+    static void connect ()
     {
 
         try
         {
             clientSocket = new Socket(InetAddress.getByName(SERVER),PORT);
             System.out.println("Connected to "+SERVER + "at port:" + PORT);
-        }catch (IOException e){p("Error connecting with the server");}
+
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            out = new PrintWriter(clientSocket.getOutputStream());
+
+            input = new Handlers.InReader(in);
+            output = new Handlers.OutWriter(out);
+            p("Streams ready");
+
+            output.sendEncrypted(myCrypto.EncryptAES(test));
+
+
+        }catch (IOException e){p("Error connecting with the server");
+        }catch (Exception e){p("Something else went wrong 1."); e.printStackTrace();}
 
     }
 
 
 
-    void p(String text)
+    static void p(String text)
     {
         System.out.println(text);
     }
