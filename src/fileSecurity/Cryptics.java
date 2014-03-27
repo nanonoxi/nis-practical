@@ -6,6 +6,8 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.MessageDigest;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.Security;
 
 /**
@@ -42,8 +44,7 @@ public class Cryptics {
             digest.update(aesPassPhrase.getBytes());
             aesKEY = new SecretKeySpec(digest.digest(),0,16,"AES");
             ivSpec = new IvParameterSpec(iv);
-
-            //RSA Prep
+            prepRSA();
 
         }catch(Exception e){e.printStackTrace();}
     }
@@ -57,7 +58,7 @@ public class Cryptics {
             aes.init(Cipher.ENCRYPT_MODE, aesKEY,ivSpec);
             cipherText = aes.doFinal(message.getBytes());
         }catch (Exception e ){e.printStackTrace();return null;}
-        return cipherText.clone();
+        return cipherText;
     }
 
     public String DecryptAES(byte[] cipherText)
@@ -74,15 +75,37 @@ public class Cryptics {
     }
 
 //RSA
-    public Byte[] EncryptRSA(String message)
+    public byte[] EncryptRSAPrivate(String message, PrivateKey privKey)
     {
-        Byte[] cipherText = new Byte[50];
+        byte[] cipherText;
+        try
+        {
+            rsa.init(Cipher.ENCRYPT_MODE, privKey);
+            cipherText = rsa.doFinal(message.getBytes());
+        }catch (Exception e ){e.printStackTrace();return null;}
         return cipherText;
     }
 
-    public String DecryptRSA(Byte[] cipherText)
+    public byte[] EncryptRSAPublic(String message, PublicKey pubKey)
+    {
+        byte[] cipherText;
+        try
+        {
+            rsa.init(Cipher.ENCRYPT_MODE, pubKey);
+            cipherText = rsa.doFinal(message.getBytes());
+        }catch (Exception e ){e.printStackTrace();return null;}
+        return cipherText;
+    }
+
+    public String DecryptRSAPrivate(byte[] cipherText, PrivateKey privKey)
     {
         String message = "";
+        try
+        {
+            rsa.init(Cipher.DECRYPT_MODE, privKey);
+            message = new String(rsa.doFinal(cipherText));
+        }
+        catch (Exception e){e.printStackTrace();}
         return message;
     }
 

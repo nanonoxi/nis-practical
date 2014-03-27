@@ -1,7 +1,9 @@
 package fileSecurity.server;
 import fileSecurity.Cryptics;
 import fileSecurity.Handlers;
+import fileSecurity.keyGenerator.KeyGeneratorz;
 
+import javax.crypto.KeyGenerator;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.*;
@@ -17,8 +19,20 @@ public class Server {
     static ServerSocket socket;
     protected final static int port = 8087;
 
+    private static PrivateKey serverPrivateKey;
+    private static PublicKey clientPublicKey;
+
     public static void main(String args[])
     {
+        try{
+            clientPublicKey = (PublicKey)KeyGeneratorz.LoadKey("public","client");
+            serverPrivateKey = (PrivateKey)KeyGeneratorz.LoadKey("private","server");
+            p("Keys loaded!");
+        }catch(Exception e)
+        {
+            p("Failed to load keys");
+        }
+
         try{
             //create a new socket connection
             socket = new ServerSocket(port);
@@ -28,7 +42,6 @@ public class Server {
             {
                 ConHandler connection = new ConHandler(socket.accept());
                 p("Socket connection attempt made");
-
                 connection.printStuff();
             }
         }
@@ -53,7 +66,6 @@ public class Server {
 
                 input = new Handlers.InReader(in);
                 output = new Handlers.OutWriter(out);
-
                 p("Streams are ready");
             }catch(Exception e){p("Error establishing streams");            }
         }
@@ -63,7 +75,8 @@ public class Server {
             byte[] test =  input.readEncrypted();
             String AESkey = "THIS is a KEY!";
             Cryptics myCrypto = new Cryptics(AESkey);
-            System.out.println(myCrypto.DecryptAES(test));
+            //System.out.println(myCrypto.DecryptAES(test));
+            System.out.println(myCrypto.DecryptRSAPrivate(test, serverPrivateKey));
 
         }
     }

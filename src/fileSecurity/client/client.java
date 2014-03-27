@@ -2,13 +2,12 @@ package fileSecurity.client;
 import com.google.gson.GsonBuilder;
 import fileSecurity.Cryptics;
 import fileSecurity.Handlers;
+import fileSecurity.keyGenerator.KeyGeneratorz;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.*;
 import java.net.*;
-import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
-import java.security.Security;
+import java.security.*;
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -27,8 +26,6 @@ public class Client {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-
-
     //Socket to handle the connection to the server
     private static Socket clientSocket;
 
@@ -37,6 +34,8 @@ public class Client {
     private static Handlers.InReader input;
     private static Handlers.OutWriter output;
     private static Cryptics myCrypto;
+    private static PrivateKey clientPrivateKey;
+    private static PublicKey serverPublicKey;
 
     static String AESkey = "THIS is a KEY!";
 
@@ -46,6 +45,16 @@ public class Client {
 
     public static void main(String args[])
     {
+        try{
+            clientPrivateKey = (PrivateKey)KeyGeneratorz.LoadKey("private","client");
+            serverPublicKey = (PublicKey)KeyGeneratorz.LoadKey("public","server");
+            p("Keys loaded!");
+        }catch(Exception e)
+        {
+            p("Failed to load keys");
+        }
+
+
         myCrypto = new Cryptics(AESkey);
         connect();
     }
@@ -64,7 +73,9 @@ public class Client {
             output = new Handlers.OutWriter(out);
             p("Streams ready");
 
-            output.sendEncrypted(myCrypto.EncryptAES("YOU ARE A PIECAKE!"));
+
+
+            output.sendEncrypted(myCrypto.EncryptRSAPublic("YOU ARE A PIECAKE!",serverPublicKey));
 
 
         }catch (IOException e){p("Error connecting with the server");
