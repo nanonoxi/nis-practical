@@ -60,11 +60,11 @@ public class Server {
 
         public void printStuff()
         {
-            //byte[] t = input.re();
             byte[] test =  input.readEncrypted();
             String AESkey = "THIS is a KEY!";
             Cryptics myCrypto = new Cryptics(AESkey);
             System.out.println(myCrypto.DecryptAES(test));
+
         }
     }
 

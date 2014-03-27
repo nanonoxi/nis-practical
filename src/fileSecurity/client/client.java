@@ -52,7 +52,6 @@ public class Client {
 
     static void connect ()
     {
-
         try
         {
             clientSocket = new Socket(InetAddress.getByName(SERVER),PORT);
@@ -65,7 +64,7 @@ public class Client {
             output = new Handlers.OutWriter(out);
             p("Streams ready");
 
-            output.sendEncrypted(myCrypto.EncryptAES(test));
+            output.sendEncrypted(myCrypto.EncryptAES("YOU ARE A PIECAKE!"));
 
 
         }catch (IOException e){p("Error connecting with the server");

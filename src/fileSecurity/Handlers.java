@@ -39,10 +39,10 @@ public class Handlers {
         public void sendEncrypted(byte[] cipherText)
         {
             output.write(cipherText.length+" \n");
-//            for ( int i =0; i< cipherText.length; i++)
-//            {
-//                output.write(cipherText[i]);
-//            }
+            for ( int i =0; i< cipherText.length; i++)
+            {
+                output.write(cipherText[i]);
+            }
             output.flush();
         }
 
