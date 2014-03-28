@@ -87,8 +87,6 @@ public class Handlers {
 
             try
             {
-
-
             for (int i=0; i<length && input.ready(); i++)
             {
                 result[i] = (byte)input.read();
@@ -98,6 +96,8 @@ public class Handlers {
             return result;
         }
     }
+
+
 
     static void p(String printme)
     {System.out.println(printme);}

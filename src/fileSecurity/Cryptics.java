@@ -3,6 +3,7 @@ package fileSecurity;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.MessageDigest;
@@ -31,7 +32,13 @@ public class Cryptics {
 //Construct
     public Cryptics()
     {
-        prepRSA();
+        try
+        {
+            aes = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            ivSpec = new IvParameterSpec(iv);
+            prepRSA();
+        }catch(Exception e){e.printStackTrace();}
+
     }
 
     public Cryptics(String aesPassPhrase)
@@ -61,6 +68,17 @@ public class Cryptics {
         return cipherText;
     }
 
+    public byte[] EncryptAES(String message, SecretKey key)
+    {
+        byte[] cipherText;
+        try
+        {
+            aes.init(Cipher.ENCRYPT_MODE, key,ivSpec);
+            cipherText = aes.doFinal(message.getBytes());
+        }catch (Exception e ){e.printStackTrace();return null;}
+        return cipherText;
+    }
+
     public String DecryptAES(byte[] cipherText)
     {
         String message = "";
@@ -68,6 +86,19 @@ public class Cryptics {
         try
         {
             aes.init(Cipher.DECRYPT_MODE, aesKEY,ivSpec);
+            message = new String(aes.doFinal(cipherText));
+        }
+        catch (Exception e){e.printStackTrace();}
+        return message;
+    }
+
+    public String DecryptAES(byte[] cipherText, SecretKey key)
+    {
+        String message = "";
+
+        try
+        {
+            aes.init(Cipher.DECRYPT_MODE, key,ivSpec);
             message = new String(aes.doFinal(cipherText));
         }
         catch (Exception e){e.printStackTrace();}

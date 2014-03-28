@@ -31,6 +31,7 @@ public class Server {
     private static PrivateKey serverPrivateKey;
     private static PublicKey clientPublicKey;
     private static Cryptics myCrypto;
+    private static String dataFile = "serverdata.txt";
 
     public static void main(String args[])
     {
@@ -54,11 +55,11 @@ public class Server {
                 ConHandler connection = new ConHandler(socket.accept());
                 p("Socket connected");
                 connection.engageHandshake();
+                connection.clientInterface();
             }
         }
         catch (IOException e){System.out.println("Error creating the socket on port:" + port);}
     }
-
 
     private static class ConHandler{
         private boolean authenticated = false;
@@ -68,6 +69,8 @@ public class Server {
         private Handlers.OutWriter output;
         private Handlers.InReader input;
         private SecretKey sessionKey;
+        private MessageDigest digest;
+
         public ConHandler(Socket socket)
         {
             this.socket = socket;
@@ -78,16 +81,28 @@ public class Server {
 
                 input = new Handlers.InReader(in);
                 output = new Handlers.OutWriter(out);
+                digest = MessageDigest.getInstance("SHA");
                 p("Streams are ready");
             }catch(Exception e){p("Error establishing streams");            }
 
             try{
                 KeyGenerator keyGen = KeyGenerator.getInstance("AES","BC");
-                keyGen.init(256);
+                keyGen.init(128);
                 sessionKey = keyGen.generateKey();
             }catch(Exception e){p("Problem generating Session Key");}
         }
 
+        public void clientInterface()
+        {
+            String choice = myCrypto.DecryptAES(input.readEncrypted(),sessionKey);
+            char option = (char)choice.charAt(0);
+            switch (option)
+            {
+                case 'u'://Upload a file
+                    fileDownloader(dataFile);
+                    break;
+            }
+        }
         public void engageHandshake()
         {
             try
@@ -117,6 +132,74 @@ public class Server {
             {
                 p("Handsake failure");
             }
+        }
+
+        public void fileDownloader(String fileName)
+        {
+            try
+            {
+                String incomingFile= myCrypto.DecryptAES(input.readEncrypted(),sessionKey);
+
+                String[] lines = incomingFile.split("\n");
+
+                File file = new File(fileName);
+
+                if (!file.exists())
+                    file.createNewFile();
+
+                FileWriter fw = new FileWriter(file);
+                BufferedWriter bw = new BufferedWriter(fw);
+
+                for ( int i=0; i < lines.length; i++)
+                {
+                    bw.write(lines[i]+"\n");
+                }
+
+                bw.close();
+
+                p("Server data File Written");
+
+            }catch (Exception e){p("stuff");}
+
+        }
+
+        public String retrieveLine(String ID)
+        {
+            String line=null;
+            try{
+            File file = new File(dataFile);
+            BufferedReader br = new BufferedReader(new FileReader(file));
+                while ((line=br.readLine())!=null)
+                {
+                    String id;
+
+                    if ((id=(line.split("||"))[0]).equals(ID))
+                        return line;
+                }
+                p("ID: "+ID+ " Not found");
+                return null;
+            }catch(Exception e){ p("Failed to read server file"); return null;}
+        }
+
+        public boolean verifyIntegrity(String ID)
+        {
+            String[] file = retrieveLine(ID).split("||");
+
+            if ( file ==null)
+            {
+                System.out.println("ID Not found");
+                return false;
+            }
+
+            digest.reset();
+            digest.update(file[0].getBytes());
+            digest.update(file[1].getBytes());
+
+            String calcHash = Base64.toBase64String(digest.digest());
+            if (calcHash.equals(file[2]))
+                return true;
+
+            return false;
         }
     }
 

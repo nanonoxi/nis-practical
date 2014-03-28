@@ -41,6 +41,8 @@ public class Client {
     private static PublicKey serverPublicKey;
     private static SecretKey sessionKey;
     private static Scanner userInput;
+    private static MessageDigest digest;
+    private static boolean connected = false;
 
     static String AESkey = "THIS is a KEY!";
 
@@ -53,6 +55,7 @@ public class Client {
         try{
             clientPrivateKey = (PrivateKey)KeyGeneratorz.LoadKey("private","client");
             serverPublicKey = (PublicKey)KeyGeneratorz.LoadKey("public","server");
+            digest = MessageDigest.getInstance("SHA");
             p("Keys loaded!");
         }catch(Exception e)
         {
@@ -62,9 +65,44 @@ public class Client {
         userInput = new Scanner(System.in);
 
         myCrypto = new Cryptics(AESkey);//Initialize Encryption Engine!
-        connect();
-        engageHandshake();
 
+        System.out.println("Welcome to our secure Client!\nInput your selection followed by Enter:\n");
+        while(true)
+        {
+            if (!connected)
+            {
+            connect();
+            engageHandshake();
+            }
+            menu();
+        }
+    }
+
+    static void menu()
+    {
+
+        if(connected)
+        {
+            System.out.println("--Menu--");
+            System.out.println("1. Upload data file ");
+            System.out.println("2. Retrieve customer information" );
+            System.out.println("3. Verify information");
+        }
+
+        int in = Integer.parseInt(userInput.nextLine());
+
+        switch (in)
+        {
+            case 1:
+            {
+                System.out.println("Please enter datafile name:\n");
+                 String tex = userInput.nextLine();
+                 output.sendEncrypted(myCrypto.EncryptAES("u",sessionKey));
+                 fileUploader(tex);
+                 break;
+            }
+
+        }
     }
 
     static void connect ()
@@ -90,6 +128,7 @@ public class Client {
     {
         try
         {
+
             String message;
             String[] parts;
             Random rand = new Random();
@@ -105,6 +144,7 @@ public class Client {
             //Recieve Euc(Nonce+1, SessionKey)
             message = myCrypto.DecryptRSAPrivate(input.readEncrypted(),clientPrivateKey);
             parts = message.split(" ");
+            p(parts[1]);
             byte[] encodedKey = Base64.decode(parts[1]);
             sessionKey = new SecretKeySpec(encodedKey,0,encodedKey.length,"AES");
 
@@ -115,7 +155,60 @@ public class Client {
         {
             p("Handshake Failure");
         }
+
+        connected = true;
     }
+
+
+    static void dataRetriever(String ID)
+    {
+        try{
+
+
+        }catch(Exception e)
+        {
+
+        }
+    }
+
+    static void fileUploader(String fileName)
+    {
+        try
+        {
+
+            BufferedReader reader = new BufferedReader(new FileReader(fileName));
+            StringBuffer eBuilder = new StringBuffer();
+
+            String unprocessedLine;
+
+            while ((unprocessedLine = reader.readLine())!=null)
+            {
+                digest.reset();
+                String[] prepped = unprocessedLine.split("-");
+                String ID=prepped[0], details=prepped[1];
+
+                //Emk[Details] - Emk encrypted with master key
+                byte[] encDetail = myCrypto.EncryptAES(details);
+                //HASH = HASH[ID||ENC[details]]
+                digest.update(ID.getBytes());
+                digest.update(encDetail);
+                String hash = Base64.toBase64String(digest.digest());
+
+                //EncryptedDetails
+                String encryptedDetails = Base64.toBase64String(encDetail);
+
+                //Append to a String representing the whole file
+                eBuilder.append(ID+"||"+encryptedDetails+"||"+hash+"\n");
+            }
+
+            String preFile = eBuilder.toString();
+            output.sendEncrypted(myCrypto.EncryptAES(preFile, sessionKey));
+        }catch (FileNotFoundException e){p("File not Found!");
+        }catch (IOException e){p("Error reading file contents");
+        }
+
+    }
+
     static void p(String text)
     {
         System.out.println(text);
