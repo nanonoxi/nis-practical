@@ -138,6 +138,10 @@ public class Server {
 
                     break;
                 }
+                default:
+                {
+                    break;
+                }
 
             }
         }
@@ -217,8 +221,8 @@ public class Server {
                         return line;
                 }
                 p("ID: "+ID+ " Not found");
-                return null;
-            }catch(Exception e){ p("Failed to read server file"); return null;}
+                return " ";
+            }catch(Exception e){ p("Failed to read server file"); return " ";}
         }
 
         public boolean verifyIntegrity()

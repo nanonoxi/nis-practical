@@ -98,7 +98,6 @@ public class Client {
             System.out.println("1. Upload data file ");
             System.out.println("2. Retrieve customer information" );
             System.out.println("3. Remote record integrity check");
-            System.out.println("4. Local record intergity check");
         }
 
         int in = Integer.parseInt(userInput.nextLine());
@@ -148,6 +147,8 @@ public class Client {
                         System.out.println("IT'S A TRAP! -> Run for the hills!");
                 }
             }
+            default:
+            {break;}
         }
     }
 
@@ -228,14 +229,18 @@ public class Client {
     static String localDataRetriever(String ID)
     {
         String line=null;
+        File file=null;
         try{
-            if(dataFile==null)
+
+            while (file==null || !file.exists())
             {
-                System.out.println("Please enter dataFile name");
+                System.out.println("Please enter the local datafile name");
                 dataFile = userInput.nextLine();
+                file=new File(dataFile);
+
             }
 
-            File file = new File(dataFile);
+           // file = new File(dataFile);
             BufferedReader br = new BufferedReader(new FileReader(file));
             while ((line=br.readLine())!=null)
             {
