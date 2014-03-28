@@ -4,10 +4,13 @@ import fileSecurity.Cryptics;
 import fileSecurity.Handlers;
 import fileSecurity.keyGenerator.KeyGeneratorz;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.util.encoders.Base64;
 
 import java.io.*;
 import java.net.*;
 import java.security.*;
+import java.util.Random;
+import java.util.Scanner;
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -36,6 +39,8 @@ public class Client {
     private static Cryptics myCrypto;
     private static PrivateKey clientPrivateKey;
     private static PublicKey serverPublicKey;
+    private static SecretKey sessionKey;
+    private static Scanner userInput;
 
     static String AESkey = "THIS is a KEY!";
 
@@ -53,8 +58,13 @@ public class Client {
         {
             p("Failed to load keys");
         }
-        myCrypto = new Cryptics(AESkey);
+
+        userInput = new Scanner(System.in);
+
+        myCrypto = new Cryptics(AESkey);//Initialize Encryption Engine!
         connect();
+        engageHandshake();
+
     }
 
     static void connect ()
@@ -80,7 +90,36 @@ public class Client {
     {
         try
         {
-            //TBA
+            String message;
+            String[] parts;
+            Random rand = new Random();
+
+            //1.
+            //Send Eus(ID, Nonce)
+            System.out.println("Enter ID:");
+            String id = userInput.nextLine();
+            int nonce = rand.nextInt(9876);
+            output.sendEncrypted(myCrypto.EncryptRSAPublic(id + " " + nonce, serverPublicKey));
+
+            //2.
+            //Recieve Euc(Nonce+1, SessionKey)
+            message = myCrypto.DecryptRSAPrivate(input.readEncrypted(),clientPrivateKey);
+            parts = message.split(" ");
+            p(nonce + " " + parts[0]);
+            byte[] encodedKey = Base64.decode(parts[1]);
+            sessionKey = new SecretKeySpec(encodedKey,0,encodedKey.length,"AES");
+
+            //Send Eus(Sessionkey)
+            output.sendEncrypted(myCrypto.EncryptRSAPublic(parts[1],serverPublicKey));
+
+            //Send encrypted file-> Esk(Id, encodedFile);
+
+
+
+
+
+
+
         }catch(Exception e)
         {
             p("Handshake Failure");
