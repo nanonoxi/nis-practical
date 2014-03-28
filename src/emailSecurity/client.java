@@ -101,7 +101,7 @@ public class Client {
             String emailSubject = Config.SUBJECT;
             MimeMessage body = new MimeMessage(session);
             body.setFrom(new InternetAddress(Config.FROM_ADDRESS));
-            InternetAddress[] addresses = {new InternetAddress((Config.TO_ADDRESS)), new InternetAddress("nisuctassignment+dan@gmail.com")};
+            InternetAddress[] addresses = {new InternetAddress((Config.TO_ADDRESS_1)), new InternetAddress(Config.TO_ADDRESS_2)};
             body.setRecipients(Message.RecipientType.TO, addresses);
             //body.setRecipient(Message.RecipientType.TO, new InternetAddress(Config.TO_ADDRESS));
             body.setSubject(emailSubject);
@@ -160,6 +160,7 @@ public class Client {
             signedMessage.saveChanges();
 
             /** encrypt email */
+            System.out.println("Encrypting email ...");
             Certificate recipientCertificate = certificate;
             SMIMEEnvelopedGenerator encrypter = new SMIMEEnvelopedGenerator();
             encrypter.addRecipientInfoGenerator(new JceKeyTransRecipientInfoGenerator((X509Certificate) recipientCertificate).setProvider("BC"));
