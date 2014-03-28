@@ -14,8 +14,8 @@ public class Config {
     public static final String FROM_ADDRESS = "nisuctassignment@gmail.com";
     public static final String TO_ADDRESS = "brndan022@myuct.ac.za";//"nisuctassignment+dan@gmail.com";
 
-    public static final String HOST = "smtp.gmail.com";
-    public static final String PORT = "587";
+    public static final String HOST = "smtp.uct.ac.za"; //"smtp.gmail.com";
+    public static final String PORT = "25"; //"587";
 
     public static final String KEY_LOCATION = "keys/Certificates.p12"; //"../../keys/key from secure.comodo.com.p12";
     public static final String KEY_ALIAS = "key from secure.comodo.com";
