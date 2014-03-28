@@ -1,6 +1,7 @@
 package fileSecurity;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.util.encoders.Base64;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -60,10 +61,12 @@ public class Cryptics {
     public byte[] EncryptAES(String message)
     {
         byte[] cipherText;
+
         try
         {
             aes.init(Cipher.ENCRYPT_MODE, aesKEY,ivSpec);
             cipherText = aes.doFinal(message.getBytes());
+
         }catch (Exception e ){e.printStackTrace();return null;}
         return cipherText;
     }
@@ -86,6 +89,7 @@ public class Cryptics {
         try
         {
             aes.init(Cipher.DECRYPT_MODE, aesKEY,ivSpec);
+
             message = new String(aes.doFinal(cipherText));
         }
         catch (Exception e){e.printStackTrace();}

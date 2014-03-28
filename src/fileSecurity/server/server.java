@@ -32,6 +32,8 @@ public class Server {
     private static PublicKey clientPublicKey;
     private static Cryptics myCrypto;
     private static String dataFile = "serverdata.txt";
+    private static ConHandler connection;
+    private static boolean connected = false;
 
     public static void main(String args[])
     {
@@ -52,10 +54,18 @@ public class Server {
 
             while(true)
             {
-                ConHandler connection = new ConHandler(socket.accept());
-                p("Socket connected");
-                connection.engageHandshake();
-                connection.clientInterface();
+                if (socket.isClosed() || !connected)
+                {
+                    connection = new ConHandler(socket.accept());
+                    p("Socket connected");
+                    connection.engageHandshake();
+                    connection.clientInterface();
+                    connected = true;
+                }else
+                {
+                    connection.clientInterface();
+                }
+
             }
         }
         catch (IOException e){System.out.println("Error creating the socket on port:" + port);}
@@ -95,12 +105,25 @@ public class Server {
         public void clientInterface()
         {
             String choice = myCrypto.DecryptAES(input.readEncrypted(),sessionKey);
+            output.sendEncrypted(myCrypto.EncryptAES("ack",sessionKey));
             char option = (char)choice.charAt(0);
             switch (option)
             {
                 case 'u'://Upload a file
                     fileDownloader(dataFile);
                     break;
+
+                case 'r'://Retrieve customer data
+                    //3. recieve ID
+                    String id = (myCrypto.DecryptAES(input.readEncrypted(),sessionKey)).toUpperCase();
+                    String record = retrieveLine(id);
+
+                    //4. send File
+                    output.sendEncrypted(myCrypto.EncryptAES(record,sessionKey));
+
+                    //5. Recieve ack
+                    System.out.println(myCrypto.DecryptAES(input.readEncrypted(),sessionKey));
+
             }
         }
         public void engageHandshake()
@@ -138,6 +161,7 @@ public class Server {
         {
             try
             {
+                //3. Download file from client
                 String incomingFile= myCrypto.DecryptAES(input.readEncrypted(),sessionKey);
 
                 String[] lines = incomingFile.split("\n");
@@ -158,6 +182,8 @@ public class Server {
                 bw.close();
 
                 p("Server data File Written");
+                //4.
+                output.sendEncrypted(myCrypto.EncryptAES("File Successfully uploaded to server",sessionKey));
 
             }catch (Exception e){p("stuff");}
 
@@ -165,15 +191,16 @@ public class Server {
 
         public String retrieveLine(String ID)
         {
+            p(ID);
             String line=null;
             try{
             File file = new File(dataFile);
             BufferedReader br = new BufferedReader(new FileReader(file));
                 while ((line=br.readLine())!=null)
                 {
-                    String id;
-
-                    if ((id=(line.split("||"))[0]).equals(ID))
+                    String id=line.split("\\|\\|")[0];
+                    p(id);
+                    if (id.equals(ID))
                         return line;
                 }
                 p("ID: "+ID+ " Not found");
