@@ -5,9 +5,20 @@ package emailSecurity;
  */
 public class Config {
 
-    public static final String USERNAME = "";
-    public static final String PASSWORD = "";
+    public static final String USERNAME = "nisuctassignment@gmail.com";
+    public static final String PASSWORD = "nis@uct2014";
+
+    public static final String CONTENT = "The quick brown fox jumps over the lazy dog.";
+    public static final String SUBJECT = "Hello World";
+
+    public static final String FROM_ADDRESS = "nisuctassignment@gmail.com";
+    public static final String TO_ADDRESS = "brndan022@myuct.ac.za";//"nisuctassignment+dan@gmail.com";
+
     public static final String HOST = "smtp.gmail.com";
     public static final String PORT = "587";
 
+    public static final String KEY_LOCATION = "keys/Certificates.p12"; //"../../keys/key from secure.comodo.com.p12";
+    public static final String KEY_ALIAS = "key from secure.comodo.com";
+    public static final String KEY_TYPE = "PKCS12";
+    public static final String KEY_PASSWORD = "nis@uct2014";
 }
