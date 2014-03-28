@@ -106,14 +106,17 @@ public class Server {
         {
             String choice = myCrypto.DecryptAES(input.readEncrypted(),sessionKey);
             output.sendEncrypted(myCrypto.EncryptAES("ack",sessionKey));
-            char option = (char)choice.charAt(0);
+            int option = Integer.parseInt(choice);
             switch (option)
             {
-                case 'u'://Upload a file
+                case 1://Upload a file
+                {
                     fileDownloader(dataFile);
                     break;
+                }
 
-                case 'r'://Retrieve customer data
+                case 2://Retrieve customer data
+                {
                     //3. recieve ID
                     String id = (myCrypto.DecryptAES(input.readEncrypted(),sessionKey)).toUpperCase();
                     String record = retrieveLine(id);
@@ -123,6 +126,18 @@ public class Server {
 
                     //5. Recieve ack
                     System.out.println(myCrypto.DecryptAES(input.readEncrypted(),sessionKey));
+
+                    break;
+                }
+
+                case 3://Verify Integrity of ServerSide data
+                {
+                    verifyIntegrity();
+                    //4. the same?
+                    output.sendEncrypted(myCrypto.EncryptAES(((verifyIntegrity())?"true":"false"),sessionKey));
+
+                    break;
+                }
 
             }
         }
@@ -141,7 +156,7 @@ public class Server {
 
                 //2.
                 //Send Euc(nonce+1, Session key)
-                int nonce = Integer.parseInt(parts[1])+1;
+                int nonce = Integer.parseInt(parts[0])+1;
                 String sKey = Base64.toBase64String(sessionKey.getEncoded());
                 output.sendEncrypted(myCrypto.EncryptRSAPublic((nonce)+" "+sKey,clientPublicKey));
 
@@ -191,7 +206,6 @@ public class Server {
 
         public String retrieveLine(String ID)
         {
-            p(ID);
             String line=null;
             try{
             File file = new File(dataFile);
@@ -199,7 +213,6 @@ public class Server {
                 while ((line=br.readLine())!=null)
                 {
                     String id=line.split("\\|\\|")[0];
-                    p(id);
                     if (id.equals(ID))
                         return line;
                 }
@@ -208,22 +221,24 @@ public class Server {
             }catch(Exception e){ p("Failed to read server file"); return null;}
         }
 
-        public boolean verifyIntegrity(String ID)
+        public boolean verifyIntegrity()
         {
-            String[] file = retrieveLine(ID).split("||");
+            //3. Recieve ID and Hash
+            String idandSignedHash = (myCrypto.DecryptAES(input.readEncrypted(),sessionKey));
+            String parts[] = idandSignedHash.split("\\|\\|");
 
-            if ( file ==null)
+            String ID=parts[0];
+            String clientSign = myCrypto.DecryptRSAPublic(Base64.decode(parts[1]),clientPublicKey);
+
+            String[] localRecord = retrieveLine(ID).split("\\|\\|");
+
+            if ( localRecord ==null)
             {
-                System.out.println("ID Not found");
+                System.out.println("Record Not on server");
                 return false;
             }
 
-            digest.reset();
-            digest.update(file[0].getBytes());
-            digest.update(file[1].getBytes());
-
-            String calcHash = Base64.toBase64String(digest.digest());
-            if (calcHash.equals(file[2]))
+            if (myCrypto.DecryptRSAPublic(Base64.decode(localRecord[2]),clientPublicKey).equals(clientSign))
                 return true;
 
             return false;

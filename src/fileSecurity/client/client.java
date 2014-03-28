@@ -45,6 +45,7 @@ public class Client {
     private static Scanner userInput;
     private static MessageDigest digest;
     private static boolean connected = false;
+    private static String dataFile=null;
 
     static String AESkey = "THIS is a KEY!";
 
@@ -74,7 +75,7 @@ public class Client {
 
         myCrypto = new Cryptics(AESkey);//Initialize Encryption Engine!
 
-        System.out.println("Welcome to our secure Client!\nInput your selection followed by Enter:\n");
+
         while(true)
         {
             if (!connected)
@@ -82,6 +83,7 @@ public class Client {
             connect();
             engageHandshake();
             }
+            System.out.println("\nWelcome to our secure Client!\nInput your selection followed by Enter:");
             menu();
         }
     }
@@ -89,12 +91,14 @@ public class Client {
     static void menu()
     {
 
+
         if(connected)
         {
             System.out.println("--Menu--");
             System.out.println("1. Upload data file ");
             System.out.println("2. Retrieve customer information" );
-            System.out.println("3. Verify information");
+            System.out.println("3. Remote record integrity check");
+            System.out.println("4. Local record intergity check");
         }
 
         int in = Integer.parseInt(userInput.nextLine());
@@ -106,29 +110,70 @@ public class Client {
                 System.out.println("Please enter datafile name:");
                  String tex = userInput.nextLine();
                 //1.
-                 output.sendEncrypted(myCrypto.EncryptAES("u",sessionKey));
+                 output.sendEncrypted(myCrypto.EncryptAES("1",sessionKey));
                 //2.
                  if(myCrypto.DecryptAES(input.readEncrypted(),sessionKey).equals("ack"))
                     fileUploader(tex);
                  break;
             }
             case 2:
+            {
                  System.out.println("Please enter ID:");
                  String id = userInput.nextLine().trim();
                  //1. init ID Retrieval
-                 output.sendEncrypted(myCrypto.EncryptAES("r",sessionKey));
+                 output.sendEncrypted(myCrypto.EncryptAES("2",sessionKey));
 
                 //2. recieve ack
                 if(myCrypto.DecryptAES(input.readEncrypted(),sessionKey).equals("ack"))
                 {
                     System.out.println(id);
-                    String serverRecord = dataRetriever(id);
+                    String serverRecord = remoteDataRetriever(id);
                     String decrypted = serverDataDecrypter(serverRecord);
                     p(decrypted);
                 }
                  break;
-
+            }
+            case 3:
+            {
+                System.out.println("Verify Integrity of Remote data\n Please enter ID:");
+                String id =userInput.nextLine().toUpperCase();
+                //1.
+                output.sendEncrypted(myCrypto.EncryptAES("3",sessionKey));
+                //2.
+                if(myCrypto.DecryptAES(input.readEncrypted(),sessionKey).equals("ack"))
+                {
+                    if(verifyRemoteRecord(id))
+                        System.out.println("Remote record is intact");
+                    else
+                        System.out.println("IT'S A TRAP! -> Run for the hills!");
+                }
+            }
         }
+    }
+
+    //This calculates a Has of the record, sending it to the server - the serve will then compare these
+    static boolean verifyRemoteRecord(String id)
+    {
+
+        String line = localDataRetriever(id);
+
+        String[] parts = line.split("-");
+        String details = parts[1];
+
+        byte[] encDetail = myCrypto.EncryptAES(details);
+
+        digest.reset();
+        //HASH = Erc[HASH[ID||ENC[details]]]
+        digest.update(parts[0].getBytes());
+        digest.update(encDetail);
+        String idandSignedHash = id+"||"+Base64.toBase64String(myCrypto.EncryptRSAPrivate(Base64.toBase64String(digest.digest()), clientPrivateKey));
+
+        //3. Send Id and signed Hash
+        output.sendEncrypted(myCrypto.EncryptAES(idandSignedHash,sessionKey));
+
+        //4. Are they the same?
+
+        return true;//(Boolean.parseBoolean(myCrypto.DecryptAES(input.readEncrypted(), sessionKey)));
     }
 
     static void connect ()
@@ -153,23 +198,19 @@ public class Client {
     {
         try
         {
-
             String message;
             String[] parts;
             Random rand = new Random();
 
             //1.
             //Send Eus(ID, Nonce)
-            System.out.println("Enter ID:");
-            String id = userInput.nextLine();
             int nonce = rand.nextInt(9876);
-            output.sendEncrypted(myCrypto.EncryptRSAPublic(id + " " + nonce, serverPublicKey));
+            output.sendEncrypted(myCrypto.EncryptRSAPublic(""+nonce, serverPublicKey));
 
             //2.
             //Recieve Euc(Nonce+1, SessionKey)
             message = myCrypto.DecryptRSAPrivate(input.readEncrypted(),clientPrivateKey);
             parts = message.split(" ");
-            p(parts[1]);
             byte[] encodedKey = Base64.decode(parts[1]);
             sessionKey = new SecretKeySpec(encodedKey,0,encodedKey.length,"AES");
 
@@ -184,8 +225,30 @@ public class Client {
         connected = true;
     }
 
+    static String localDataRetriever(String ID)
+    {
+        String line=null;
+        try{
+            if(dataFile==null)
+            {
+                System.out.println("Please enter dataFile name");
+                dataFile = userInput.nextLine();
+            }
 
-    static String dataRetriever(String ID)
+            File file = new File(dataFile);
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            while ((line=br.readLine())!=null)
+            {
+                String id=line.split("-")[0];
+                if (id.equals(ID))
+                    return line;
+            }
+            p("ID: "+ID+ " Not found");
+            return null;
+        }catch(Exception e){ p("Failed to read server file"); return null;}
+    }
+
+    static String remoteDataRetriever(String ID)
     {
         String record=null;
         try{
