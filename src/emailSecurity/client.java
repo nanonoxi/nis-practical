@@ -1,9 +1,7 @@
 package emailSecurity;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -47,6 +45,8 @@ import org.bouncycastle.operator.OperatorCreationException;
  * @author Daniel Burnham-King
  * @author Merada Richter
  * 2014/03/26
+ *
+ * Program for email security: a message from the user is signed and encrypted before being sent off to the receiver.
  */
 public class Client {
 
