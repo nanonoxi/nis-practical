@@ -59,6 +59,7 @@ import org.bouncycastle.util.Strings;
  *
  * Resources:
  *     https://blogs.oracle.com/javajungle/entry/secure_email_from_java (Mark Heckler)
+ *     http://java2s.com/Open-Source/Java/Security/Bouncy-Castle/org/bouncycastle/mail/smime/examples/SendSignedAndEncryptedMail.java.html
  */
 public class Client {
 
