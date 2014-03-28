@@ -5,6 +5,8 @@ package emailSecurity;
  * For use with Client.java
  *
  * Change this file to set the variables used in the program.
+ *
+ * When testing with Wireshark, filter on (ip.dst == 137.158.153.103 or ip.dst == 137.158.153.104)
  */
 public class Config {
 

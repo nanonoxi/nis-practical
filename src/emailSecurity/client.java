@@ -69,7 +69,6 @@ public class Client {
     private void run() {
         try {
             /** create command map for Bouncy Castle provider */
-            System.out.println("Creating command map for Bouncy Castle provider ...");
             MailcapCommandMap commandMap = (MailcapCommandMap) CommandMap.getDefaultCommandMap();
 
             commandMap.addMailcap("application/pkcs7-signature;; x-java-content-handler=org.bouncycastle.mail.smime.handlers.pkcs7_signature");
@@ -81,7 +80,8 @@ public class Client {
             CommandMap.setDefaultCommandMap(commandMap);
 
             /** create a new session for the user */
-            System.out.println("Creating a session ...");
+            System.out.println("Creating a session for USER=\"" + Config.USERNAME + "\" with PASSWORD=\"" + Config.PASSWORD + "\"" +
+                    "\n    using HOST=\"" + Config.HOST + "\" and PORT=" + Config.PORT);
 
             Properties properties = new Properties();
             //properties.put("mail.debug", "true");
@@ -97,33 +97,28 @@ public class Client {
                         }
                     });
 
-            String emailContent = Config.CONTENT;
-            String emailSubject = Config.SUBJECT;
+            System.out.println("Creating email FROM=\"" + Config.FROM_ADDRESS + "\" TO=\"" + Config.TO_ADDRESS_1 + "\" and \"" + Config.TO_ADDRESS_2 + "\"" +
+                    "\n    with SUBJECT=\"" + Config.SUBJECT + "\"" +
+                    "\n    and CONTENT=\"" + Config.CONTENT + "\"");
+
             MimeMessage body = new MimeMessage(session);
             body.setFrom(new InternetAddress(Config.FROM_ADDRESS));
             InternetAddress[] addresses = {new InternetAddress((Config.TO_ADDRESS_1)), new InternetAddress(Config.TO_ADDRESS_2)};
             body.setRecipients(Message.RecipientType.TO, addresses);
-            //body.setRecipient(Message.RecipientType.TO, new InternetAddress(Config.TO_ADDRESS));
-            body.setSubject(emailSubject);
-            body.setContent(emailContent, "text/plain");
+            body.setSubject(Config.SUBJECT);
+            body.setContent(Config.CONTENT, "text/plain");
             body.saveChanges();
 
             /** create and initialize keystore */
-            System.out.println("Initializing keystore ...");
             KeyStore keystore = KeyStore.getInstance(Config.KEY_TYPE);
 
-            System.out.println("Loading keys ...");
+            System.out.println("Loading keys from LOCATION=" + Config.KEY_LOCATION);
             keystore.load(new FileInputStream(Config.KEY_LOCATION), Config.KEY_PASSWORD.toCharArray());
 
-            System.out.println("Retrieving private key from p12 file ...");
             PrivateKey privateKey = (PrivateKey)keystore.getKey(Config.KEY_ALIAS, Config.KEY_PASSWORD.toCharArray());
-
-            // load certificate
-            System.out.println("Retrieving certificate ...");
             Certificate certificate = keystore.getCertificate(Config.KEY_ALIAS);
 
             /** create SMIMESignedGenerator */
-            System.out.println("Create SMIME signed generator ...");
             SMIMECapabilityVector capabilities = new SMIMECapabilityVector();
             capabilities.addCapability(SMIMECapability.dES_EDE3_CBC);
             capabilities.addCapability(SMIMECapability.rC2_CBC, 128);
@@ -138,6 +133,7 @@ public class Client {
             attributes.add(new SMIMECapabilitiesAttribute(capabilities));
 
             /** sign email */
+            System.out.println("Initializing SMIMESignedGenerator with ALG=SHA1withRSA");
             SMIMESignedGenerator signer = new SMIMESignedGenerator();
             signer.addSignerInfoGenerator(new JcaSimpleSignerInfoGeneratorBuilder().setProvider("BC")
                     .build("SHA1withRSA", privateKey, (X509Certificate) certificate));
@@ -148,7 +144,6 @@ public class Client {
 
             System.out.println("Signing email ...");
             MimeMultipart smimeSigned = signer.generate(body);
-
             MimeMessage signedMessage = new MimeMessage(session);
             Enumeration headers = body.getAllHeaderLines();
             while (headers.hasMoreElements()) {
@@ -160,7 +155,7 @@ public class Client {
             signedMessage.saveChanges();
 
             /** encrypt email */
-            System.out.println("Encrypting email ...");
+            System.out.println("Initializaing SMIMEEnvelopedGenerator with BC Provider");
             Certificate recipientCertificate = certificate;
             SMIMEEnvelopedGenerator encrypter = new SMIMEEnvelopedGenerator();
             encrypter.addRecipientInfoGenerator(new JceKeyTransRecipientInfoGenerator((X509Certificate) recipientCertificate).setProvider("BC"));
@@ -171,9 +166,8 @@ public class Client {
             assert smimeEncrypted != null;
             smimeEncrypted.writeTo(out);
 
+            System.out.println("Encrypting email ...");
             MimeMessage encryptedMessage = new MimeMessage(session, new ByteArrayInputStream(out.toByteArray()));
-
-            /* Set all original MIME headers in the encrypted message */
             headers = body.getAllHeaderLines();
             while (headers.hasMoreElements())
             {
@@ -187,8 +181,12 @@ public class Client {
             }
 
             /** send email */
-            System.out.println("Sending mail ...");
+            System.out.println("Sending signed and encrypted mail TO=\"" + Config.TO_ADDRESS_1 + "\" and \"" + Config.TO_ADDRESS_2 + "\"");
             Transport.send(encryptedMessage);
+
+            // for testing
+            //System.out.println("Sending signed mail to \"" + Config.TO_ADDRESS_1 + "\" and \"" + Config.TO_ADDRESS_2 + "\"");
+            //Transport.send(signedMessage);
 
             System.out.println("Done.");
 
