@@ -88,14 +88,6 @@ public class Server {
             }catch(Exception e){p("Problem generating Session Key");}
         }
 
-        public void printStuff()
-        {
-            byte[] test =  input.readEncrypted();
-            String AESkey = "THIS is a KEY!";
-            //System.out.println(myCrypto.DecryptAES(test));
-            System.out.println(myCrypto.DecryptRSAPrivate(test, serverPrivateKey));
-        }
-
         public void engageHandshake()
         {
             try
@@ -105,14 +97,15 @@ public class Server {
 
                 //1.
                 //Recieve Eus(ID,nonce)
-                message = myCrypto.DecryptRSAPrivate(input.readEncrypted(),serverPrivateKey);
+                if ((message = myCrypto.DecryptRSAPrivate(input.readEncrypted(),serverPrivateKey))==null)
+                {socket.close(); p("Key Mismatch");}
                 parts = message.split(" ");
 
                 //2.
                 //Send Euc(nonce+1, Session key)
-                int nonce = Integer.parseInt(parts[1]);
+                int nonce = Integer.parseInt(parts[1])+1;
                 String sKey = Base64.toBase64String(sessionKey.getEncoded());
-                output.sendEncrypted(myCrypto.EncryptRSAPublic((nonce+1)+" "+sKey,clientPublicKey));
+                output.sendEncrypted(myCrypto.EncryptRSAPublic((nonce)+" "+sKey,clientPublicKey));
 
                 //3.
                 //Recieve Eus(Session key)

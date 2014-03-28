@@ -105,29 +105,17 @@ public class Client {
             //Recieve Euc(Nonce+1, SessionKey)
             message = myCrypto.DecryptRSAPrivate(input.readEncrypted(),clientPrivateKey);
             parts = message.split(" ");
-            p(nonce + " " + parts[0]);
             byte[] encodedKey = Base64.decode(parts[1]);
             sessionKey = new SecretKeySpec(encodedKey,0,encodedKey.length,"AES");
 
             //Send Eus(Sessionkey)
-            output.sendEncrypted(myCrypto.EncryptRSAPublic(parts[1],serverPublicKey));
-
-            //Send encrypted file-> Esk(Id, encodedFile);
-
-
-
-
-
-
+            output.sendEncrypted(myCrypto.EncryptRSAPublic(parts[1], serverPublicKey));
 
         }catch(Exception e)
         {
             p("Handshake Failure");
         }
     }
-
-
-
     static void p(String text)
     {
         System.out.println(text);
